@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SecurePass{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-tachometer-alt me-2"></i>Password Vault</h2>
+                <p class="text-muted mb-0">Welcome back, {{ current_user.username }}!</p>
+            </div>
+            <a href="{{ url_for('add_password') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Add Password
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% if passwords %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Stored Passwords ({{ passwords|length }})</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% for password in passwords %}
+                        <div class="password-item p-3 border-bottom">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-globe me-2 text-primary"></i>
+                                        {{ password[2] }}
+                                    </h6>
+                                    {% if password[3] %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-user me-1"></i>{{ password[3] }}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Added: {{ password[6][:10] if password[6] else 'Unknown' }}
+                                    </small>
+                                </div>
+                                <div class="col-md-5 text-end">
+                                    <button class="btn btn-outline-primary btn-sm me-2" 
+                                            onclick="viewPassword({{ password[0] }})">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </button>
+                                    <button class="btn btn-outline-success btn-sm me-2" 
+                                            onclick="copyPassword({{ password[0] }})">
+                                        <i class="fas fa-copy me-1"></i>Copy
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            onclick="deletePassword({{ password[0] }}, '{{ password[2] }}')">
+                                        <i class="fas fa-trash me-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="card text-center">
+                <div class="card-body py-5">
+                    <i class="fas fa-lock fa-4x text-muted mb-3"></i>
+                    <h4>No passwords stored yet</h4>
+                    <p class="text-muted mb-4">Start building your secure password vault by adding your first password.</p>
+                    <a href="{{ url_for('add_password') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Add Your First Password
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Master Password Modal -->
+<div class="modal fade" id="masterPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-key me-2"></i>Enter Master Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="masterPasswordForm">
+                    <div class="mb-3">
+                        <label for="masterPassword" class="form-label">Master Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="masterPassword" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggleMasterPassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="passwordId">
+                    <input type="hidden" id="actionType">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitMasterPassword()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Display Modal -->
+<div class="modal fade" id="passwordDisplayModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="displayedPassword" readonly>
+                    <button class="btn btn-outline-primary" type="button" onclick="copyToClipboard()">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This password will be hidden when you close this window.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the password for <strong id="deleteServiceName"></strong>?</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This action cannot be undone!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" id="deleteForm" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPasswordId = null;
+    let currentAction = null;
+    
+    function viewPassword(passwordId) {
+        currentPasswordId = passwordId;
+        currentAction = 'view';
+        document.getElementById('passwordId').value = passwordId;
+        document.getElementById('actionType').value = 'view';
+        document.getElementById('masterPassword').value = '';
+        new bootstrap.Modal(document.getElementById('masterPasswordModal')).show();
+    }
+    
+    function copyPassword(passwordId) {
+        currentPasswordId = passwordId;
+        currentAction = 'copy';
+        document.getElementById('passwordId').value = passwordId;
+        document.getElementById('actionType').value = 'copy';
+        document.getElementById('masterPassword').value = '';
+        new bootstrap.Modal(document.getElementById('masterPasswordModal')).show();
+    }
+    
+    function deletePassword(passwordId, serviceName) {
+        document.getElementById('deleteServiceName').textContent = serviceName;
+        document.getElementById('deleteForm').action = `/delete_password/${passwordId}`;
+        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+    }
+    
+    function submitMasterPassword() {
+        const masterPassword = document.getElementById('masterPassword').value;
+        const passwordId = document.getElementById('passwordId').value;
+        const actionType = document.getElementById('actionType').value;
+        
+        if (!masterPassword) {
+            alert('Please enter your master password');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('master_password', masterPassword);
+        
+        fetch(`/view_password/${passwordId}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                bootstrap.Modal.getInstance(document.getElementById('masterPasswordModal')).hide();
+                
+                if (actionType === 'view') {
+                    document.getElementById('displayedPassword').value = data.password;
+                    new bootstrap.Modal(document.getElementById('passwordDisplayModal')).show();
+                } else if (actionType === 'copy') {
+                    navigator.clipboard.writeText(data.password).then(() => {
+                        alert('Password copied to clipboard!');
+                    }).catch(() => {
+                        alert('Failed to copy password to clipboard');
+                    });
+                }
+            }
+        })
+        .catch(error => {
+            alert('An error occurred: ' + error.message);
+        });
+    }
+    
+    function copyToClipboard() {
+        const password = document.getElementById('displayedPassword').value;
+        navigator.clipboard.writeText(password).then(() => {
+            alert('Password copied to clipboard!');
+        }).catch(() => {
+            alert('Failed to copy password to clipboard');
+        });
+    }
+    
+    // Toggle master password visibility
+    document.getElementById('toggleMasterPassword').addEventListener('click', function() {
+        const passwordField = document.getElementById('masterPassword');
+        const toggleIcon = this.querySelector('i');
+        
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordField.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    });
+    
+    // Clear master password when modal is hidden
+    document.getElementById('masterPasswordModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('masterPassword').value = '';
+    });
+    
+    // Clear displayed password when modal is hidden
+    document.getElementById('passwordDisplayModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('displayedPassword').value = '';
+    });
+</script>
+{% endblock %}
