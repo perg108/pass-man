@@ -14,11 +14,15 @@
                 </div>
                 
                 <form method="POST" id="registerForm">
+                    {{ form.hidden_tag() }}
                     <div class="mb-3">
                         <label for="username" class="form-label">
                             <i class="fas fa-user me-2"></i>Username
                         </label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        {{ form.username(class="form-control", id="username") }}
+                        {% for error in form.username.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
                         <div class="form-text">Choose a unique username for your account</div>
                     </div>
                     
@@ -27,12 +31,18 @@
                             <i class="fas fa-lock me-2"></i>Login Password
                         </label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="password" name="password" required>
+                            {{ form.password(class="form-control", id="password") }}
                             <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
+                        {% for error in form.password.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
                         <div class="form-text">This password is used to log into your account</div>
+                        <div class="form-text text-muted small">
+                            Requirements: 8+ characters, uppercase, lowercase, number, special character
+                        </div>
                     </div>
                     
                     <div class="mb-4">
@@ -40,14 +50,20 @@
                             <i class="fas fa-key me-2"></i>Master Password
                         </label>
                         <div class="input-group">
-                            <input type="password" class="form-control" id="master_password" name="master_password" required>
+                            {{ form.master_password(class="form-control", id="master_password") }}
                             <button class="btn btn-outline-secondary" type="button" id="toggleMasterPassword">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
+                        {% for error in form.master_password.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
                         <div class="form-text">
                             <strong>Important:</strong> This password encrypts your stored passwords. 
                             <span class="text-danger">If you forget it, your data cannot be recovered!</span>
+                        </div>
+                        <div class="form-text text-muted small">
+                            Requirements: 8+ characters, uppercase, lowercase, number, special character
                         </div>
                     </div>
                     
@@ -61,9 +77,7 @@
                     </div>
                     
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>Create Account
-                        </button>
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
                     </div>
                 </form>
                 
