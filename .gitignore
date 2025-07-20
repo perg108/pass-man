@@ -1,0 +1,35 @@
+# Ignore environment files
+.env
+.env.*
+
+# Ignore temporary files
+/tmp/
+*.tmp
+*.temp
+
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore database files in development
+password_manager.db
+*.db
+
+# Ignore log files
+*.log
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore backup files
+*.bak
+*.backup

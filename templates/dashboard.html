@@ -91,6 +91,7 @@
             </div>
             <div class="modal-body">
                 <form id="masterPasswordForm">
+                    {{ csrf_token() }}
                     <div class="mb-3">
                         <label for="masterPassword" class="form-label">Master Password</label>
                         <div class="input-group">
@@ -102,6 +103,7 @@
                     </div>
                     <input type="hidden" id="passwordId">
                     <input type="hidden" id="actionType">
+                    <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
                 </form>
             </div>
             <div class="modal-footer">
@@ -204,6 +206,7 @@
         const masterPassword = document.getElementById('masterPassword').value;
         const passwordId = document.getElementById('passwordId').value;
         const actionType = document.getElementById('actionType').value;
+        const csrfToken = document.getElementById('csrfToken').value;
         
         if (!masterPassword) {
             alert('Please enter your master password');
@@ -212,6 +215,7 @@
         
         const formData = new FormData();
         formData.append('master_password', masterPassword);
+        formData.append('csrf_token', csrfToken);
         
         fetch(`/view_password/${passwordId}`, {
             method: 'POST',
